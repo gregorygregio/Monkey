@@ -5,6 +5,7 @@ import (
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/token"
+	"strconv"
 )
 
 type Parser struct {
@@ -27,6 +28,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 
 	p.registerPrefixFn(token.IDENT, p.parseIdentifier)
+	p.registerPrefixFn(token.INT, p.parseIntegerLiteral)
 
 	return p
 }
@@ -125,6 +127,21 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{Token: p.currentToken}
+
+	value, err := strconv.ParseInt(lit.Token.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", lit.Token.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	lit.Value = value
+
+	return lit
 }
 
 func (p *Parser) expectPeek(tokenType token.TokenType) bool {
