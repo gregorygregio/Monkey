@@ -24,15 +24,21 @@ func TestLetStatements(t *testing.T) {
 	}
 	tests := []struct {
 		expectedIdentifier string
+		expectValue        interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foo"},
+		{"x", 5},
+		{"y", 10},
+		{"foo", 8888},
 	}
 
 	for i, tt := range tests {
 		stmt := program.Statements[i]
 		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+			return
+		}
+
+		val := stmt.(*ast.LetStatement).Value
+		if !testLiteralExpression(t, val, tt.expectValue) {
 			return
 		}
 	}
@@ -56,7 +62,9 @@ func TestReturnStatements(t *testing.T) {
 		t.Fatalf("p.Statements does not contain 3 statements. got=%d", len(program.Statements))
 	}
 
-	for _, stmt := range program.Statements {
+	expectedLiterals := []int{5, 10, 99999}
+
+	for i, stmt := range program.Statements {
 
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
 		if !ok {
@@ -65,6 +73,10 @@ func TestReturnStatements(t *testing.T) {
 		}
 		if returnStmt.TokenLiteral() != "return" {
 			t.Errorf("returnStmt.TokenLiteral not 'return'. got %q", returnStmt.TokenLiteral())
+		}
+
+		if !testLiteralExpression(t, returnStmt.ReturnValue, expectedLiterals[i]) {
+			return
 		}
 	}
 }
